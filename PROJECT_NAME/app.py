@@ -33,7 +33,7 @@ class App:
             return
 
         self._parse_args()
-        raise NotImplementedError
+        raise NotImplementedError('NO')
 
     def _parse_args(self):
         pass
