@@ -19,7 +19,7 @@
 
 ##-----------------------##----------------------------------------------------
 ## es7s/gitmessage   v11 ## es7s projects commit normalizer
-## (c) 2022              ## A. Shavykin <0.delameter@gmail.com>
+## (c) *CYR              ## A. Shavykin <0.delameter@gmail.com>
 
 # Run this command to make git use new commit template:
 #   git config --add commit.template .gitmessage

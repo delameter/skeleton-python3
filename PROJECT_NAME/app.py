@@ -1,12 +1,13 @@
 # -----------------------------------------------------------------------------
 # *PROJECT_NAME [*PROJECT_DESCRIPTION]
-# (C) 2022 A. Shavykin <0.delameter@gmail.com>
+# (C) *CYR A. Shavykin <0.delameter@gmail.com>
 # -----------------------------------------------------------------------------
 """
 SYNOPSIS
-    project_name --help
+    *PROJECT_NAME
+    *PROJECT_NAME --help
 
-Prints out this help.
+Prints out this help or crashes with NotImplementedError.
 
 ARGUMENTS
   No.
@@ -33,7 +34,7 @@ class App:
             return
 
         self._parse_args()
-        raise NotImplementedError("в пизду")
+        raise NotImplementedError
 
     def _parse_args(self):
         pass
