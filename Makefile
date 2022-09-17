@@ -17,13 +17,14 @@ BOLD   := $(shell tput -Txterm bold)
 UNDERL := $(shell tput -Txterm smul)
 GREEN  := $(shell tput -Txterm setaf 2)
 YELLOW := $(shell tput -Txterm setaf 3)
+BLUE   := $(shell tput -Txterm setaf 4)
 RESET  := $(shell tput -Txterm sgr0)
 
-
+##
 ## Common commands
 
 help:   ## Show this help
-	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v @fgrep | sed -Ee 's/^(##)\s*([^#]+)#*\s*(.*)/\1${YELLOW}\2${RESET}#\3/; s/(.+):(#|\s)+(.+)/##   ${GREEN}\1${RESET}#\3/; s/\*(\w+)\*/${UNDERL}\1${RESET}/g' | column -t -s '#'
+	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v @fgrep | sed -Ee 's/^(##)\s*([^#]+)#*\s*(.*)/\1${YELLOW}\2${RESET}#\3/; s/(.+):(#|\s)+(.+)/##   ${GREEN}\1${RESET}#\3/; s/\*(\w+)\*/${UNDERL}\1${RESET}/g; s/<(\S+)>/${BLUE}\1${RESET}/g' | column -t -s '#'
 
 all:   ## Prepare, run tests, generate docs and reports, build module
 all: prepare test doctest coverage build
@@ -35,15 +36,14 @@ prepare:  ## Prepare environment for module building
 	pip3 install -r requirements.txt
 	pip3 install -r requirements-dev.txt
 
-prepare-pdf:  ## Prepare environment for pdf rendering
+prepare-extra:  ## Prepare system for pdf rendering and dependency graph building
 	sudo apt install texlive-latex-recommended \
 					 texlive-fonts-recommended \
-					 texlive-latex-extra latexmk
+					 texlive-latex-extra \
+					 latexmk \
+					 graphviz
 
-demolish-build:  ## Purge build output folders
-	rm -f -v dist/* ${PROJECT_NAME_PUBLIC}.egg-info/* ${PROJECT_NAME_PRIVATE}.egg-info/*
-
-
+##
 ## Testing / Pre-build
 
 set-version: ## Set new package version
@@ -87,7 +87,7 @@ depends:  ## Build and display module dependency graph
 	pydeps ${PROJECT_NAME} --rmprefix ${PROJECT_NAME}. -o scripts/diagrams/cycles.svg 	   --show-cycle                       --no-show
 	pydeps ${PROJECT_NAME} --rmprefix ${PROJECT_NAME}. -o scripts/diagrams/imports-ext.svg --pylib  --collapse-target-cluster --no-show
 
-
+##
 ## Documentation
 
 reinit-docs: ## Erase and reinit docs with auto table of contents
@@ -115,10 +115,13 @@ docs-pdf: ## Build PDF documentation
 docs-all: ## Build documentation in all formats
 docs-all: docs docs-pdf
 
+##
+## Release / dev
 
-## Releasing (dev)
+demolish-build-dev:
+	rm -f -v dist-dev/* ${PROJECT_NAME_PRIVATE}.egg-info/*
 
-build-dev: ## Create new private build ("*PROJECT_NAME-delameter")
+build-dev: ## Create new private build (<*PROJECT_NAME-delameter>)
 build-dev: demolish-build
 	sed -E -i "s/^name.+/name = ${PROJECT_NAME_PRIVATE}/" setup.cfg
 	. venv/bin/activate
@@ -134,14 +137,13 @@ install-dev: ## Install latest private build from dev repo
 	. "${ES7S_VENV}/bin/activate"
 	pip install -i https://test.pypi.org/simple/ ${PROJECT_NAME_PRIVATE}==${VERSION}
 
-install-dev-public: ## Install latest *public* build from dev repo
-	. "${ES7S_VENV}/bin/activate"
-	pip install -i https://test.pypi.org/simple/ ${PROJECT_NAME_PUBLIC}==${VERSION}
+##
+## Release / MASTER
 
+demolish-build:
+	rm -f -v dist/* ${PROJECT_NAME_PUBLIC}.egg-info/*
 
-## Releasing (MASTER)
-
-build: ## Create new *public* build ("*PROJECT_NAME")
+build: ## Create new *public* build (<*PROJECT_NAME>)
 build: demolish-build
 	. venv/bin/activate
 	python3 -m build
@@ -153,9 +155,4 @@ upload: ## Upload latest *public* build to MASTER repo
 install: ## Install latest *public* build from MASTER repo using pipx
 	pipx install ${PROJECT_NAME_PUBLIC}
 
-##-----------------------##-------------------------------------------------------------
-## To install private    ## #
-## build as public one:## #
-# make build upload-dev install-dev-public :##
-##                       ## #                                               (dont do that)
-########################### #
+##
