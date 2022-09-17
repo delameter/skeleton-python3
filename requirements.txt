@@ -1,2 +1,2 @@
---pre
+-i https://test.pypi.org/simple/ --pre
 pytermor==2.1.*
