@@ -27,7 +27,7 @@ Morbi semper metus at egestas vulputate:
 
 ## Installation
 
-    pip install *PROJECT_NAME
+    pipx install *PROJECT_NAME
 
 Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. 
 
