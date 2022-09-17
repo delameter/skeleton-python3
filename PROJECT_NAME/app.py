@@ -15,7 +15,6 @@ ARGUMENTS
 import sys
 
 from pytermor import Styles
-from pytermor.render import print_exception
 
 
 # noinspection PyMethodMayBeStatic
@@ -24,7 +23,7 @@ class App:
         try:
             self._entrypoint()
         except Exception as e:
-            print_exception(e, file=sys.stderr)
+            self._print_exception(e)
             self._exit(1)
         self._exit(0)
 
@@ -44,6 +43,9 @@ class App:
 
     def _print_error(self):
         print(Styles.ERROR.render('[ERR]'))
+
+    def _print_exception(self, e):
+        print(str(e), file=sys.stderr)
 
     def _exit(self, code: int):
         print()
