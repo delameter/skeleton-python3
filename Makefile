@@ -150,10 +150,8 @@ upload: ## Upload latest *public* build to MASTER repo
 	. venv/bin/activate
 	python3 -m twine upload dist/* -u ${PYPI_USERNAME} -p ${PYPI_PASSWORD} --verbose
 
-install: ## Install latest *public* build from MASTER repo
-	. "${ES7S_VENV}/bin/activate"
-	pip install ${PROJECT_NAME_PUBLIC}==${VERSION}
-
+install: ## Install latest *public* build from MASTER repo using pipx
+	pipx install ${PROJECT_NAME_PUBLIC}
 
 ##-----------------------##-------------------------------------------------------------
 ## To install private    ## #
