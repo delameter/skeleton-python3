@@ -31,5 +31,5 @@ exclude_lines =
 ignore_errors = True
 
 [html]
-directory = coverage-report
+directory = coverage
 title = *PROJECT_NAME coverage report
