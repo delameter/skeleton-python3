@@ -7,75 +7,78 @@
 PROJECT_NAME = *PROJECT_NAME
 PROJECT_NAME_PUBLIC = ${PROJECT_NAME}
 PROJECT_NAME_PRIVATE = ${PROJECT_NAME}-delameter
-DEPENDS_PATH = misc/depends
-COVERAGE_PATH = misc/coverage
 
-include .env.dist
--include .env
+HOST_DEFAULT_PYTHON ?= /usr/bin/python
+VENV_DEV_PATH = venv
+
+DOTENV = .env
+DOTENV_DIST = .env.dist
+OUT_BUILD_RELEASE_PATH = dist
+OUT_BUILD_DEV_PATH = dist-dev
+OUT_DEPS_PATH = misc/depends
+OUT_COVER_PATH = misc/coverage
+
+include ${DOTENV_DIST}
+-include ${DOTENV}
 export
 VERSION ?= 0.0.0
 
+NOW    := $(shell date '+%Y-%b-%0e.%H%M%S.%3N')
 BOLD   := $(shell tput -Txterm bold)
-UNDERL := $(shell tput -Txterm smul)
 GREEN  := $(shell tput -Txterm setaf 2)
 YELLOW := $(shell tput -Txterm setaf 3)
 BLUE   := $(shell tput -Txterm setaf 4)
-DIM   := $(shell tput -Txterm dim)
-RESET  := $(shell tput -Txterm sgr0)
-
-##
+DIM    := $(shell tput -Txterm dim)
+RESET  := $(shell printf '\e[m')
+                                # tput -Txterm sgr0 returns SGR-0 with
+                                # nF code switching esq, which displaces the columns
 ## Common commands
 
 help:   ## Show this help
-	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v @fgrep | sed -Ee 's/^(##)\s?(\s*#?[^#]+)#*\s*(.*)/\1${YELLOW}\2${RESET}#\3/; s/(.+):(#|\s)+(.+)/##   ${GREEN}\1${RESET}#\3/; s/\*(\w+)\*/${BOLD}\1${RESET}/g; 2~1s/<([*A-Za-z0-9_-]+)>/${DIM}\1${RESET}/gi' -e 's/(\x1b\[)33m#/\136m/' | column -ts#
+	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v @fgrep | sed -Ee 's/^(##)\s?(\s*#?[^#]+)#*\s*(.*)/\1${YELLOW}\2${RESET}#\3/; s/(.+):(#|\s)+(.+)/##   ${GREEN}\1${RESET}#\3/; s/\*(\w+)\*/${BOLD}\1${RESET}/g; 2~1s/<([*<@>.A-Za-z0-9_-]+)>/${DIM}\1${RESET}/gi' -e 's/(\x1b\[)33m#/\136m/' | column -ts# | sed -Ee 's/ {3}>/ >/'
+
+environment:  ## Show environment vars used by this Makefile
+	@echo HOST_DEFAULT_PYTHON=${HOST_DEFAULT_PYTHON}
+	echo OUT_BUILD_DEV_PATH=${PWD}/${OUT_BUILD_DEV_PATH}
+	echo OUT_BUILD_RELEASE_PATH=${PWD}/${OUT_BUILD_RELEASE_PATH}
+	echo OUT_COVER_PATH=${PWD}/${OUT_COVER_PATH}
+	echo OUT_DEPS_PATH=${PWD}/${OUT_DEPS_PATH}
+	echo PIPX_DEFAULT_PYTHON=${PIPX_DEFAULT_PYTHON}
+	echo VENV_DEV_PATH=${PWD}/${VENV_DEV_PATH}
+
+reinit-build:  ## > Prepare environment for module building  <venv>
+	rm -vrf ${VENV_DEV_PATH}
+	if [ ! -f .env.build ] ; then cp -u ${DOTENV_DIST} ${DOTENV} && sed -i -Ee '/^VERSION=/d' ${DOTENV} ; fi
+	${HOST_DEFAULT_PYTHON} -m venv ${VENV_DEV_PATH}
+	${HOST_DEFAULT_PYTHON} -m pip install pipx
+	${VENV_DEV_PATH}/bin/pip install -r requirements.txt -r requirements-dev.txt
+	${VENV_DEV_PATH}/bin/python -m es7s --version
 
 all:   ## Prepare, run tests, generate docs and reports, build module
-all: prepare test doctest coverage build
-
-prepare:  ## Prepare environment for module building
-	rm -vrf venv
-	python -m venv venv
-	python -m pip install pipx
-	venv/bin/pip install --upgrade build twine
-	venv/bin/pip install -r requirements.txt
-	venv/bin/pip install -r requirements-dev.txt
-
-prepare-extra:  ## Prepare system for pdf rendering and dependency graph building
-	sudo apt install texlive-latex-recommended \
-					 texlive-fonts-recommended \
-					 texlive-latex-extra \
-					 latexmk \
-					 graphviz
+all: reinit-build test coverage build
 
 ##
 ## Pre-build
 
 demolish-build:  ## Delete build output folders
-	rm -f -v dist/* ${PROJECT_NAME_PUBLIC}.egg-info/* ${PROJECT_NAME_PRIVATE}.egg-info/*
+	rm -f -v ${OUT_BUILD_RELEASE_PATH}/* ${PROJECT_NAME_PUBLIC}.egg-info/* ${PROJECT_NAME_PRIVATE}.egg-info/*
 
 show-version: ## Show current package version
 	@echo "Current version: ${YELLOW}${VERSION}${RESET}"
 
 set-version: ## Set new package version
 set-version: show-version
-	@echo "Current version: ${YELLOW}${VERSION}${RESET}"
-	read -p "New version (press enter to keep current): " VERSION
+	@read -p "New version (press enter to keep current): " VERSION
 	if [ -z $$VERSION ] ; then echo "No changes" && return 0 ; fi
-	if [ ! -f .env ] ; then cp -u .env.dist .env ; fi
-	sed -E -i "s/^VERSION.+/VERSION=$$VERSION/" .env .env.dist
+	sed -E -i "s/^VERSION.+/VERSION=$$VERSION/" ${DOTENV_DIST}
 	sed -E -i "s/^version.+/version = $$VERSION/" setup.cfg
-	sed -E -i "s/^__version__.+/__version__ = '$$VERSION'/" ${PROJECT_NAME}/__init__.py
+	sed -E -i "s/^__version__.+/__version__ = \"$$VERSION\"/" ${PROJECT_NAME}/_version.py
 	echo "Updated version: ${GREEN}$$VERSION${RESET}"
 
 depends:  ## Build and display module dependency graph
-	rm -vrf ${DEPENDS_PATH}
-	mkdir -p ${DEPENDS_PATH}
-	venv/bin/pydeps ${PROJECT_NAME} --rmprefix ${PROJECT_NAME}. --start-color 120 \
-	    --max-bacon 1 -o ${DEPENDS_PATH}/imports-ext0.svg
-	venv/bin/pydeps ${PROJECT_NAME} --rmprefix ${PROJECT_NAME}. --start-color 0 \
-	    --max-bacon 2 -o ${DEPENDS_PATH}/imports-ext1.svg --no-show
-	venv/bin/pydeps ${PROJECT_NAME} --show-cycle --start-color 120 \
-	    --max-bacon 1 -o ${DEPENDS_PATH}/cycles.svg --no-show
+	rm -vrf ${OUT_DEPS_PATH}
+	mkdir -p ${OUT_DEPS_PATH}
+	./pydeps.sh ${VENV_DEV_PATH}/bin/pydeps ${PROJECT_NAME} ${OUT_DEPS_PATH}
 
 purge-cache:  ## Clean up pycache
 	find . -type d \( -name __pycache__ -or -name .pytest_cache \) -print -exec rm -rf {} +
@@ -84,92 +87,68 @@ purge-cache:  ## Clean up pycache
 ## Testing
 
 test: ## Run pytest
-	venv/bin/pytest tests
+	${VENV_DEV_PATH}/bin/pytest tests
 
 test-verbose: ## Run pytest with detailed output
-	venv/bin/pytest tests -v
+	${VENV_DEV_PATH}/bin/pytest tests -v
 
 test-debug: ## Run pytest with VERY detailed output
-	venv/bin/pytest tests -v --log-cli-level=DEBUG
-
-doctest: ## Run doctest
-	venv/bin/sphinx-build docs docs/_build -b doctest -q && echo "Doctest ${GREEN}OK${RESET}"
+	${VENV_DEV_PATH}/bin/pytest tests -v --log-file-level=DEBUG --log-file=logs/testrun.${NOW}.log
+	if command -v bat &>/dev/null ; then bat logs/testrun.${NOW}.log -n --wrap=never ; else less logs/testrun.${NOW}.log ; fi
 
 coverage: ## Run coverage and make a report
-	rm -vrf ${COVERAGE_PATH}
-	venv/bin/python -m coverage run tests -vv
-	venv/bin/coverage report
-	venv/bin/coverage html
-	if [ -n $$DISPLAY ] ; then xdg-open ${COVERAGE_PATH}/index.html ; fi
-
-##
-## Documentation
-
-reinit-docs: ## Erase and reinit docs with auto table of contents
-	rm -v docs/*.rst
-	venv/bin/sphinx-apidoc --force --separate --module-first --tocfile index --output-dir docs ${PROJECT_NAME}
-
-demolish-docs:  ## Purge docs output folder
-	rm -rvf docs/_build
-
-docs: ## Build HTML documentation
-docs: demolish-docs
-	venv/bin/sphinx-build -aEn docs docs/_build -b html
-	@if [ -n "${DISPLAY}" ] ; then xdg-open docs/_build/index.html ; fi
-
-docs-pdf: ## Build PDF documentation
-	mkdir -p docs-build
-	. venv/bin/activate
-	yes "" | make -C docs latexpdf  # twice for building pdf toc
-	yes "" | make -C docs latexpdf  # @FIXME broken unicode
-	mv docs/_build/latex/${PROJECT_NAME}.pdf docs-build/${PROJECT_NAME}.pdf
-	@if [ -n "${DISPLAY}" ] ; then xdg-open docs-build/${PROJECT_NAME}.pdf ; fi
-
-docs-all: ## Build documentation in all formats
-docs-all: docs docs-pdf
+	rm -vrf ${OUT_COVER_PATH}
+	${VENV_DEV_PATH}/bin/python -m coverage run tests -vv
+	${VENV_DEV_PATH}/bin/coverage report
+	${VENV_DEV_PATH}/bin/coverage html
+	if [ -n $$DISPLAY ] ; then xdg-open ${OUT_COVER_PATH}/index.html ; fi
 
 ##
 ## Building / Packaging
-### local <*PROJECT_NAME>
+###  local
 
-reinstall-local:  ## (Re)install as editable package
-	pipx uninstall ${PROJECT_NAME}
+reinstall-local:  ## > (Re)install as editable, inject latest deps  <pipx>
+	@pipx uninstall ${PROJECT_NAME}
 	pipx install ${PROJECT_NAME} --pip-args="-e ."
+	pipx inject ${PROJECT_NAME} pytermor --pip-args=${REINSTALL_LOCAL_PYTERMOR_PA}
+	es7s --version
 
-### dev <*PROJECT_NAME-delameter>
+###  dev
 
-build-dev: ## Create new private build
+build-dev: ## Create new private build  <*-test>
 build-dev: demolish-build
 	sed -E -i "s/^name.+/name = ${PROJECT_NAME_PRIVATE}/" setup.cfg
-	venv/bin/build --outdir dist-dev
+	${VENV_DEV_PATH}/bin/python -m build --outdir ${OUT_BUILD_DEV_PATH}
 	sed -E -i "s/^name.+/name = ${PROJECT_NAME_PUBLIC}/" setup.cfg
 
 upload-dev: ## Upload last private build (=> dev registry)
-	venv/bin/twine upload \
+	${VENV_DEV_PATH}/bin/twine \
+	    upload \
 	    --repository testpypi \
 	    -u ${PYPI_USERNAME} \
 	    -p ${PYPI_PASSWORD_DEV} \
 	    --verbose \
-	    dist-dev/*
+	    ${OUT_BUILD_DEV_PATH}/*
 
 install-dev: ## Install latest private build from dev registry
 	pipx uninstall ${PROJECT_NAME_PRIVATE}
 	pipx install ${PROJECT_NAME_PRIVATE}==${VERSION} --pip-args="-i https://test.pypi.org/simple/"
 
-### release <*PROJECT_NAME>
+### release
 
 build: ## Create new *public* build
 build: demolish-build
-	venv/bin/build
+	${VENV_DEV_PATH}/bin/python -m build
 
 upload: ## Upload last *public* build (=> PRIMARY registry)
-	venv/bin/twine upload \
+	${VENV_DEV_PATH}/bin/twine \
+	    upload \
 	    -u ${PYPI_USERNAME} \
 	    -p ${PYPI_PASSWORD} \
 	    --verbose \
-	    dist/*
+	    ${OUT_BUILD_RELEASE_PATH}/*
 
-install: ## Install latest *public* build from PRIMARY registry
+install: ## > Install latest *public* build from PRIMARY registry
 	pipx install ${PROJECT_NAME_PUBLIC}
 
 ##
