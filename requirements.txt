@@ -1,3 +1,2 @@
 setuptools~=62.3.2
-# pytermor~=1.8 # 2.1.0
 # click~=8.1

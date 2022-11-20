@@ -52,7 +52,7 @@ reinit-build:  ## > Prepare environment for module building  <venv>
 	${HOST_DEFAULT_PYTHON} -m venv ${VENV_DEV_PATH}
 	${HOST_DEFAULT_PYTHON} -m pip install pipx
 	${VENV_DEV_PATH}/bin/pip install -r requirements.txt -r requirements-dev.txt
-	${VENV_DEV_PATH}/bin/python -m es7s --version
+	# ${VENV_DEV_PATH}/bin/python -m ${PROJECT_NAME} --version
 
 all:   ## Prepare, run tests, generate docs and reports, build module
 all: reinit-build test coverage build
@@ -110,8 +110,7 @@ coverage: ## Run coverage and make a report
 reinstall-local:  ## > (Re)install as editable, inject latest deps  <pipx>
 	@pipx uninstall ${PROJECT_NAME}
 	pipx install ${PROJECT_NAME} --pip-args="-e ."
-	pipx inject ${PROJECT_NAME} pytermor --pip-args=${REINSTALL_LOCAL_PYTERMOR_PA}
-	es7s --version
+	# ${PROJECT_NAME} --version
 
 ###  dev
 

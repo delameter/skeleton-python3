@@ -14,8 +14,6 @@ ARGUMENTS
 """
 import sys
 
-from pytermor import Styles
-
 
 # noinspection PyMethodMayBeStatic
 class App:
@@ -40,9 +38,6 @@ class App:
 
     def _print_usage(self):
         print(__doc__)
-
-    def _print_error(self):
-        print(Styles.ERROR.render('[ERR]'))
 
     def _print_exception(self, e):
         print(str(e), file=sys.stderr)
