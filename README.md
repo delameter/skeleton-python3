@@ -38,6 +38,8 @@ Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit la
 ## Usage
 
     grep -lrEe '*PROJECT_NAME' | xargs sed -i 's/[*]PROJECT_NAME/xxx/g'
+    grep -lrEe '*PROJECT_DESC' | xargs sed -i 's/[*]PROJECT_DESCRIPTION/aaaaaaaa/g'
+    grep -lrEe '*PROJECT_URL' | xargs sed -i 's/[*]PROJECT_URL/uuu\/xxx/g'
     grep -lrEe '*CYR' | xargs sed -i 's/[*]CYR/yyyy/g'
     mv PROJECT_NAME xxx
 
