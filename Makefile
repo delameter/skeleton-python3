@@ -47,7 +47,10 @@ environment:  ## Show environment vars used by this Makefile
 	echo PIPX_DEFAULT_PYTHON=${PIPX_DEFAULT_PYTHON}
 	echo VENV_PATH=${PWD}/${VENV_PATH}
 
-reinit-build:  ## > Prepare environment for module building  <venv>
+init:  ## Replace placeholders throughout the skeleton
+	./init.sh
+
+reinit-venv:  ## > Prepare environment for module building  <venv>
 	rm -vrf ${VENV_PATH}
 	if [ ! -f .env.build ] ; then cp -u ${DOTENV_DIST} ${DOTENV} && sed -i -Ee '/^VERSION=/d' ${DOTENV} ; fi
 	${HOST_DEFAULT_PYTHON} -m venv ${VENV_PATH}
