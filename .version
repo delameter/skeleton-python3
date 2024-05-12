@@ -1,0 +1,28 @@
+#!/bin/sh
+#------------------------------------------------------------------------------
+# ${PACKAGE_NAME}
+# (c) *CYR. AUTHOR <*EMAIL>
+#------------------------------------------------------------------------------
+
+__main() {
+  if command -v hatch >/dev/null ; then
+      version=$(hatch version) && echo "$version" && return
+  fi
+
+  # shellcheck disable=SC2046
+  [ -f .env.dist ] && export $(grep '^PACKAGE_NAME' .env.dist | xargs)
+
+  if [ -x venv/bin/python ]  ; then
+      # shellcheck disable=SC2086
+      PYTHONPATH=. venv/bin/python -m ${PACKAGE_NAME} -s && return
+  fi
+
+  if [ -f "${PACKAGE_NAME}/_version.py" ] ; then
+      sed -nEe "s/[ ']+//g; /^__version__/s/.+=//p;t" "${PACKAGE_NAME}/_version.py" && return
+  fi
+
+  echo "Failed to determine version" >&2
+  return 1
+}
+
+__main "$@"

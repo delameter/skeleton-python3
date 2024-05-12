@@ -1,6 +1,143 @@
 [build-system]
-requires = [
-    "setuptools>=42",
-    "wheel"
+requires = ["hatchling", "hatch-requirements-txt"]
+build-backend = "hatchling.build"
+
+[project]
+name = "*PROJECT_NAME"
+dynamic = ["version", "dependencies"]
+description = "*PROJECT_DESCRIPTION"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10,<3.14"
+platforms = ["linux"]
+keywords = [*KEYWORDS]
+authors = [
+    { name = "*AUTHOR_NAME", email = "*AUTHOR_EMAIL" },
 ]
-build-backend = "setuptools.build_meta"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Development Status :: 3 - Alpha",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "click~=8.1",
+    "pytermor>=2.118.0.dev0",
+]
+
+[project.optional-dependencies]
+build = [
+    "build~=1.0",
+    "twine~=4.0",
+]
+test = [
+    "coverage[toml]~=6.4",
+    "coveralls~=3.3",
+    "pytest~=7.1",
+    "pytest-cov~=4.1",
+    "typing-extensions~=4.6",
+]
+dev = [
+    "pydeps~=1.10",
+    "radon>=6.0.1",
+]
+
+[project.scripts]
+*PROJECT_NAME = "*PROJECT_NAME.__main__:main"
+
+[project.urls]
+"Homepage" = "*PROJECT_URL"
+"Bug Tracker" = "*PROJECT_URL/issues"
+"Changelog" = "*PROJECT_URL/blob/master/CHANGES.rst"
+
+# -------------------------------------
+
+[tool.hatch.version]
+path = "*PROJECT_NAME/_version.py"
+
+[tool.hatch.publish.index]
+disable = true
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/*PROJECT_NAME",
+    "/requirements",
+]
+
+[tool.hatch.env]
+requires = [
+    "hatch-pip-compile",
+]
+
+[tool.hatch.envs.default]
+type = "pip-compile"
+
+[tool.hatch.envs.default.scripts]
+version = "python -m *PROJECT_NAME"
+
+[tool.hatch.envs.build]
+features = ["build"]
+
+[tool.hatch.envs.dev]
+features = ["build", "dev"]
+
+[tool.hatch.envs.dev.scripts]
+test = "pytest"
+metrics = "radon"
+
+# -------------------------------------
+
+[tool.pytest.ini_options]
+testpaths = [
+    "*PROJECT_NAME",
+    "tests",
+]
+addopts = [
+    "--strict-config",
+    "--maxfail", "5",
+    "--durations", "5",
+]
+xfail_strict = true
+markers = []
+
+# -------------------------------------
+
+[tool.coverage.run]
+source = ["*PROJECT_NAME"]
+branch = true
+omit = [
+    "*/__init__.py",
+    "*/__main__.py",
+    "*/_version.py",
+]
+relative_files = true
+dynamic_context = "test_function"
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __debug__",
+    "if self.debug",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "raise LogicError",
+    "if __name__ == .__main__.:",
+    "def repr_attrs\\(.+",
+]
+ignore_errors = true
+
+[tool.coverage.html]
+title = "*PROJECT_NAME coverage report"
+
+# -------------------------------------
+
+[tool.black]
+line-length = 99
+target-version = ['py312']
+
+[tool.isort]
+profile = "black"

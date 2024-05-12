@@ -13,8 +13,8 @@ root_doc = 'index'
 # -- Project information ------------------------------------------------------
 
 project = '*PROJECT_NAME'
-copyright = '*CYR, Alexandr Shavykin'
-author = 'Alexandr Shavykin'
+copyright = '*CYR, *AUTHOR_NAME'
+author = '*AUTHOR_NAME'
 show_authors = True
 
 github_repository = '*PROJECT_NAME'
