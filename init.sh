@@ -57,14 +57,14 @@ __main() {
         xargs -0n1 sed -i -E "${expr[*]}"
 
       [[ -d PROJECT_NAME ]] && mv -v PROJECT_NAME "$val_project"
-    fi
 
-    local mkfile=Makefile
-    local mkline0="$(IFS=' ' grep $mkfile -nm1 -Ee '^init:' | cut -f1 -d:)"
-    if [[ -n $mkline0 ]] ; then
-        # shellcheck disable=SC2086,SC2046
-        sed -i $mkfile -Ee $(printf "%sd;" $(( mkline0 - 1 )) $mkline0 $(( mkline0 + 1 )))
-        echo "Updated: $mkfile"
+      local mkfile=Makefile
+      local mkline0="$(IFS=' ' grep $mkfile -nm1 -Ee '^init:' | cut -f1 -d:)"
+      if [[ -n $mkline0 ]] ; then
+          # shellcheck disable=SC2086,SC2046
+          sed -i $mkfile -Ee $(printf "%sd;" $(( mkline0 - 1 )) $mkline0 $(( mkline0 + 1 )))
+          echo "Updated: $mkfile"
+      fi
     fi
 }
 
