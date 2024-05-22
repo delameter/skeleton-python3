@@ -11,7 +11,7 @@ __main() {
 
     local -r def_project="$(basename "$(realpath .)")"
     read -r -p "[1/9] Project name     (format: $RE_PROJECT)(enter=${_c}${def_project@Q}${_f}): " val_project
-    val_project="${val_project:-$val_project}"
+    val_project="${val_project:-$def_project}"
 
     local def_user="${GITHUB_USER}"
     [[ -z $def_user ]] && def_user="$(git config --get user.name)"
@@ -38,6 +38,7 @@ __main() {
     local -r quoted_keywords="$(printf \"%s\", ${val_keywords[*]})"
 
     val_user="${val_user:-$def_user}"
+    val_author="${val_author:-$def_user}"
     val_email="${val_email:-$def_email}"
 
     local -a expr=(
@@ -49,9 +50,9 @@ __main() {
       "s/[*]CYR/$(date +%Y)/g;"
     )
     [[ ${#val_keywords} -gt 0  && $quoted_keywords != "" ]] && \
-      expr+=("s/[*]KEYWORDS/${quoted_keywords%,}/;")
-    echo "${expr[@]}"
-    return
+      expr+=("s/[*]KEYWORDS/${quoted_keywords%,}/;") || \
+      expr+=("s/[*]KEYWORDS//;")
+
     find . -type f -not \( -path ./.\*/\* -or -name init.sh \) -print0 | \
       tee /dev/stderr 2> >(tr '\0' '\n' | sed -Ee 's/^.+/Processing: &/' >&2 ) | \
       xargs -0n1 sed -i -E "${expr[*]}"
