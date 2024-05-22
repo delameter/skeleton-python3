@@ -1,0 +1,6 @@
+class CommandRun:
+    def __init__(self, **kwargs):
+        ...
+
+    def run(self):
+        ...

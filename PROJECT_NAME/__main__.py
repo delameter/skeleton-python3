@@ -1,9 +1,9 @@
-from .app import App
+from . import entrypoint_fn
 
 
 def main():
-    (App()).run()
+    entrypoint_fn()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
